@@ -108,6 +108,32 @@ resource "terraform_data" "vswitch" {
         exit 0
       fi
 
+      # The module detaches its own servers before this runs. Servers that are still attached were
+      # attached by something else (or this resource is dropped because hcloud_vswitch_id is now
+      # set), so the vSwitch is kept instead of cutting those servers off.
+      status=$(curl -sS -o "$response_file" -w '%%{http_code}' \
+        -u "$ROBOT_USER:$ROBOT_PASSWORD" \
+        "${self.input.robot_api_url}/vswitch/$vswitch_id" || true)
+
+      case "$status" in
+        200)
+          ;;
+        404)
+          exit 0
+          ;;
+        *)
+          printf 'Unexpected Robot API status while reading vSwitch %s before cancelling it: %s\n' "$vswitch_id" "$status" >&2
+          exit 1
+          ;;
+      esac
+
+      attached_servers=$(jq -r '[.server[]? | (.server_number | tostring)] | join(", ")' "$response_file")
+
+      if [ -n "$attached_servers" ]; then
+        printf 'Keeping vSwitch %s: servers %s are still attached. Cancel it in Robot once it is no longer needed.\n' "$vswitch_id" "$attached_servers"
+        exit 0
+      fi
+
       status=$(curl -sS -o /dev/null -w '%%{http_code}' \
         -u "$ROBOT_USER:$ROBOT_PASSWORD" \
         -X DELETE \
@@ -441,4 +467,14 @@ resource "terraform_data" "vswitch_server" {
   }
 
   depends_on = [data.external.vswitch]
+}
+
+# Replaced by terraform_data.vswitch_server. Forget the old instance instead of destroying it, so the
+# upgrade plan shows no destroy. The old resource never called the Robot API on destroy.
+removed {
+  from = terraform_data.vswitch_attachment
+
+  lifecycle {
+    destroy = false
+  }
 }
