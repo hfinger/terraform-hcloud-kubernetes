@@ -242,7 +242,8 @@ locals {
 # One instance per bare metal server. The state records which servers this module attached, so
 # only those are detached again. Servers attached to the vSwitch by anything else are left alone.
 resource "terraform_data" "vswitch_server" {
-  for_each = local.bare_metal_enabled && var.hcloud_robot_user != null ? {
+  # The Robot user may be passed in as a sensitive value. Only whether it is set is used here.
+  for_each = local.bare_metal_enabled && nonsensitive(var.hcloud_robot_user != null) ? {
     for server in local.bare_metal_servers : tostring(server.number) => server
   } : {}
 
