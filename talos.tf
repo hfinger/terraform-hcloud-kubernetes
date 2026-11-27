@@ -436,6 +436,9 @@ resource "talos_machine_configuration_apply" "bare_metal" {
   }
 
   lifecycle {
+    # A reinstalled server boots into maintenance mode and needs its configuration applied again.
+    replace_triggered_by = [terraform_data.bare_metal_server[each.key]]
+
     precondition {
       condition     = each.value.endpoint != ""
       error_message = "Bare metal Talos endpoint could not be determined for ${each.key}."

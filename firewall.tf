@@ -579,6 +579,10 @@ resource "terraform_data" "bare_metal_firewall" {
   }
 
   lifecycle {
+    # A reinstall puts the Robot firewall into its installation state (SSH only); the final rules
+    # must be written again, else the Talos API (50000) stays closed and the config apply fails.
+    replace_triggered_by = [terraform_data.bare_metal_server[each.key]]
+
     precondition {
       condition     = length(local.bare_metal_firewall_input_rules) <= local.robot_firewall_max_rules_per_direction
       error_message = "Bare metal server ${each.value.number} has ${length(local.bare_metal_firewall_input_rules)} Robot firewall input rules, but the maximum is ${local.robot_firewall_max_rules_per_direction}."
