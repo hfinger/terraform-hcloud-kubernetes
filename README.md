@@ -299,6 +299,25 @@ kubectl -n kube-system rollout restart ds/cilium ds/cilium-envoy
 kubectl -n kube-system rollout restart deploy/cilium-operator
 ```
 
+#### Per-pool Talos configuration
+
+`bare_metal_config_patches` reaches every bare metal server. Configuration for one pool only, for example the volume layout of database nodes, goes into `config_patches` of that pool: a list of Talos configuration documents as YAML strings, applied after `bare_metal_config_patches`.
+
+```hcl
+bare_metal_nodepools = [
+  {
+    name   = "pg"
+    taints = ["example.com/postgres=true:NoSchedule"]
+    servers = [{ number = 3333333, private_ipv4 = "10.0.88.30" }]
+    config_patches = [
+      yamlencode({ apiVersion = "v1alpha1", kind = "VolumeConfig", name = "EPHEMERAL", provisioning = { maxSize = "80GiB" } }),
+    ]
+  }
+]
+```
+
+Volume settings such as the size of `EPHEMERAL` only take effect when Talos provisions the volume, so set them before the server is installed.
+
 #### Robot Firewall
 
 By default the module manages the [Robot firewall](https://docs.hetzner.com/robot/dedicated-server/firewall/) of every bare metal server. Some servers have none, for example those with a 10G uplink, where the Robot API answers `404 FIREWALL_NOT_AVAILABLE` and the apply fails. Opt out per server with `robot_firewall_enabled = false`:

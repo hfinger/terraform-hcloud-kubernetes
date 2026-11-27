@@ -167,6 +167,7 @@ data "talos_machine_configuration" "bare_metal" {
   config_patches = concat(
     [for patch in local.talos_common_config_patches : yamlencode(patch)],
     [for patch in local.bare_metal_talos_config_patches[each.key] : yamlencode(patch)],
-    [for patch in var.bare_metal_config_patches : yamlencode(patch)]
+    [for patch in var.bare_metal_config_patches : yamlencode(patch)],
+    local.bare_metal_servers[each.key].config_patches
   )
 }

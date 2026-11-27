@@ -520,6 +520,9 @@ variable "bare_metal_nodepools" {
     rdns        = optional(string)
     rdns_ipv4   = optional(string)
     rdns_ipv6   = optional(string)
+    # Talos configuration documents (YAML strings) for this pool only, applied after
+    # bare_metal_config_patches, e.g. VolumeConfig or UserVolumeConfig for database nodes.
+    config_patches = optional(list(string), [])
   }))
   default     = []
   description = "Defines configuration settings for Hetzner bare metal Worker node pools."

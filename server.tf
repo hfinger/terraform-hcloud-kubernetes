@@ -11,6 +11,7 @@ locals {
         install_raid_level     = server.install_raid_level,
         preserve_other_disks   = server.preserve_other_disks,
         robot_firewall_enabled = server.robot_firewall_enabled,
+        config_patches         = np.config_patches,
       }
     }
   ]...) : {}

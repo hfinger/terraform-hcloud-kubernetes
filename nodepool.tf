@@ -85,7 +85,8 @@ locals {
         np.labels,
         { nodepool = np.name }
       ),
-      annotations = np.annotations,
+      annotations    = np.annotations,
+      config_patches = np.config_patches,
       taints = [for taint in np.taints : regex(
         "^(?P<key>[^=:]+)=?(?P<value>[^=:]*?):(?P<effect>.+)$",
         taint
