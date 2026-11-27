@@ -641,6 +641,10 @@ resource "terraform_data" "bare_metal_server" {
         fi
       done
 
+      # The rescue system activates LVM volume groups (e.g. from Talos LVMVolumeGroupConfig) and
+      # their device-mapper devices hold the disks open, so wipefs fails with "device busy".
+      vgchange --activate n >/dev/null 2>&1 || true
+      dmsetup remove_all >/dev/null 2>&1 || true
       mdadm --stop --scan >/dev/null 2>&1 || true
 
       for disk in "$${install_disks[@]}"; do
